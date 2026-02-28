@@ -4,7 +4,7 @@ const { validate } = require('./index');
 const createItemValidator = [
     body('name').notEmpty().withMessage('Name is required'),
     body('description').notEmpty().withMessage('Description is required'),
-    body('image_url').notEmpty().withMessage('Image URL is required'),
+    body('image').notEmpty().withMessage('Image URL is required'),
     body('preparation_time').notEmpty().withMessage('Preparation time is required').isNumeric().withMessage('Preparation time must be a number'),
     body('base_price')
         .notEmpty().withMessage('Base price is required')
