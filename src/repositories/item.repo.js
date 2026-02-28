@@ -1,13 +1,33 @@
-const { query } = require('../config/db.conf');
+const { query, pool } = require('../config/db.conf');
 
-const createItem = (body) => {
-    const { name, description, image, base_price, preparation_time, is_available = true, category_id } = body;
-    return query(
-        `INSERT INTO item (name, description, image, base_price, preparation_time, is_available, category_id) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) 
-         RETURNING id, name, description, image, base_price, preparation_time, is_available, category_id`,
-        [name, description, image, base_price, preparation_time, is_available, category_id]
-    )
+const createItem = async (body) => {
+    const { name, description, image, base_price, preparation_time, is_available = true, category_id, dietary_ids } = body;
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const itemResult = await client.query(
+            `INSERT INTO item (name, description, image, base_price, preparation_time, is_available, category_id) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7) 
+             RETURNING id, name, description, image, base_price, preparation_time, is_available, category_id`,
+            [name, description, image, base_price, preparation_time, is_available, category_id]
+        );
+
+        const item = itemResult.rows[0];
+
+        if (dietary_ids && dietary_ids.length > 0) {
+            const values = dietary_ids.map(d_id => `('${item.id}', '${d_id}')`).join(', ');
+            await client.query(`INSERT INTO item_dietary (item_id, dietary_id) VALUES ${values}`);
+        }
+
+        await client.query('COMMIT');
+        return itemResult;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 const getItemByName = (name) => {
@@ -67,55 +87,81 @@ const getItemById = (id) => {
     return query("SELECT * FROM item WHERE id = $1", [id])
 }
 
-const updateItem = (id, body) => {
-    const { name, description, image, base_price, preparation_time, is_available, category_id } = body;
-    let updateQuery = "UPDATE item SET ";
-    const updateValues = [];
-    let paramIndex = 1;
+const updateItem = async (id, body) => {
+    const { name, description, image, base_price, preparation_time, is_available, category_id, dietary_ids } = body;
 
-    if (name !== undefined) {
-        updateQuery += `name = $${paramIndex}, `;
-        updateValues.push(name);
-        paramIndex++;
-    }
-    if (description !== undefined) {
-        updateQuery += `description = $${paramIndex}, `;
-        updateValues.push(description);
-        paramIndex++;
-    }
-    if (image !== undefined) {
-        updateQuery += `image = $${paramIndex}, `;
-        updateValues.push(image);
-        paramIndex++;
-    }
-    if (base_price !== undefined) {
-        updateQuery += `base_price = $${paramIndex}, `;
-        updateValues.push(base_price);
-        paramIndex++;
-    }
-    if (preparation_time !== undefined) {
-        updateQuery += `preparation_time = $${paramIndex}, `;
-        updateValues.push(preparation_time);
-        paramIndex++;
-    }
-    if (is_available !== undefined) {
-        updateQuery += `is_available = $${paramIndex}, `;
-        updateValues.push(is_available);
-        paramIndex++;
-    }
-    if (category_id !== undefined) {
-        updateQuery += `category_id = $${paramIndex}, `;
-        updateValues.push(category_id);
-        paramIndex++;
-    }
+    const client = await pool.connect();
 
-    // Remove trailing comma and space
-    updateQuery = updateQuery.slice(0, -2);
+    try {
+        await client.query('BEGIN');
 
-    updateQuery += ` WHERE id = $${paramIndex} RETURNING *`;
-    updateValues.push(id);
+        let updateQuery = "UPDATE item SET ";
+        const updateValues = [];
+        let paramIndex = 1;
 
-    return query(updateQuery, updateValues);
+        if (name !== undefined) {
+            updateQuery += `name = $${paramIndex}, `;
+            updateValues.push(name);
+            paramIndex++;
+        }
+        if (description !== undefined) {
+            updateQuery += `description = $${paramIndex}, `;
+            updateValues.push(description);
+            paramIndex++;
+        }
+        if (image !== undefined) {
+            updateQuery += `image = $${paramIndex}, `;
+            updateValues.push(image);
+            paramIndex++;
+        }
+        if (base_price !== undefined) {
+            updateQuery += `base_price = $${paramIndex}, `;
+            updateValues.push(base_price);
+            paramIndex++;
+        }
+        if (preparation_time !== undefined) {
+            updateQuery += `preparation_time = $${paramIndex}, `;
+            updateValues.push(preparation_time);
+            paramIndex++;
+        }
+        if (is_available !== undefined) {
+            updateQuery += `is_available = $${paramIndex}, `;
+            updateValues.push(is_available);
+            paramIndex++;
+        }
+        if (category_id !== undefined) {
+            updateQuery += `category_id = $${paramIndex}, `;
+            updateValues.push(category_id);
+            paramIndex++;
+        }
+
+        let itemResult = null;
+        if (updateValues.length > 0) {
+            updateQuery = updateQuery.slice(0, -2);
+            updateQuery += ` WHERE id = $${paramIndex} RETURNING *`;
+            updateValues.push(id);
+            itemResult = await client.query(updateQuery, updateValues);
+        } else {
+            itemResult = await client.query("SELECT * FROM item WHERE id = $1", [id]);
+        }
+
+
+        if (dietary_ids !== undefined) {
+            await client.query("DELETE FROM item_dietary WHERE item_id = $1", [id]);
+            if (dietary_ids.length > 0) {
+                const values = dietary_ids.map(d_id => `('${id}', '${d_id}')`).join(', ');
+                await client.query(`INSERT INTO item_dietary (item_id, dietary_id) VALUES ${values}`);
+            }
+        }
+
+        await client.query('COMMIT');
+        return itemResult;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 const deleteItem = (id) => {

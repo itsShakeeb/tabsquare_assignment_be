@@ -10,6 +10,7 @@ const createItemValidator = [
         .notEmpty().withMessage('Base price is required')
         .isNumeric().withMessage('Base price must be a number'),
     body('category_id').notEmpty().withMessage('Category ID is required'),
+    body('dietary_ids').optional().isArray().withMessage('Dietary IDs must be an array'),
     validate,
 ];
 
@@ -18,6 +19,7 @@ const updateItemValidator = [
     body('base_price')
         .optional()
         .isNumeric().withMessage('Base price must be a number'),
+    body('dietary_ids').optional().isArray().withMessage('Dietary IDs must be an array'),
     validate,
 ];
 
