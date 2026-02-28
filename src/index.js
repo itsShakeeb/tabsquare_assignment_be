@@ -27,6 +27,8 @@ app.use('/v1/category', require('./routes/category'))
 app.use('/v1/dietary', require('./routes/dietary'))
 app.use('/v1/item', require('./routes/item'))
 app.use('/v1/add_ons', require('./routes/add_ons'))
+app.use('/v1/cart', require('./routes/cart'))
+app.use('/v1/order', require('./routes/order'))
 
 app.listen(PORT, () => {
     console.log(`Server is running on ${PORT}`);
