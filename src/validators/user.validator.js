@@ -2,6 +2,7 @@ const { body, validationResult } = require("express-validator");
 
 const validateUser = [
     body("email").isEmail().withMessage("Valid email is required"),
+    body("name").isLength({ min: 3 }).withMessage("name is required"),
     body('phone_no').isLength({ min: 10, max: 10 }).withMessage('phone_no is required'),
     body("password")
         .isLength({ min: 6 })

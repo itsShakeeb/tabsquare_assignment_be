@@ -2,8 +2,8 @@ const userService = require('../services/user.service');
 const { COOKIE_MAX_AGE } = require('../utils/constant');
 
 const createUserController = async (req, res) => {
-    const { email, password, phone_no, role } = req.body
-    const body = { email, password, phone_no, role }
+    const { email, password, phone_no, name, role } = req.body
+    const body = { email, password, phone_no, name, role }
     try {
         const user = await userService.createUser(body);
         res.status(201).json(user);

@@ -6,11 +6,22 @@ const findUserByEmail = (email) =>
 const findUserById = (user_id) =>
     query("SELECT * FROM users WHERE id = $1", [user_id]);
 
-const insertUser = ({ email, password, username, name, role }) => {
+const insertUser = ({ email, password, name, phone_no, role }) => {
+
+    if (role) {
+        return query(
+            `INSERT INTO users (email, password, name, phone_no, role)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, email`,
+            [email, password, name, phone_no, role]
+        );
+    }
 
     return query(
-        "INSERT INTO users (email, password, username, name, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, email",
-        [email, password, username, name, role]
+        `INSERT INTO users (email, password, name, phone_no)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id, email`,
+        [email, password, name, phone_no]
     );
 }
 const insertSessions = ({ user_id, status }) => {
