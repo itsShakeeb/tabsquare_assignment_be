@@ -1,4 +1,5 @@
 const { body, validationResult } = require("express-validator");
+const { validate } = require("./index");
 
 const validateUser = [
     body("email").isEmail().withMessage("Valid email is required"),
@@ -7,14 +8,7 @@ const validateUser = [
     body("password")
         .isLength({ min: 6 })
         .withMessage("Password must be at least 6 chars long"),
-
-    (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(422).json({ errors: errors.array() });
-        }
-        next();
-    },
+    validate
 ];
 
 const validateLogin = [
@@ -22,13 +16,6 @@ const validateLogin = [
     body('password')
         .isLength({ min: 6 })
         .withMessage("Password must be at least 6 chars long"),
-    (req, res, next) => {
-        const errors = validationResult(req)
-        if (!errors.isEmpty()) {
-            return res.status(422).json({ error: errors.array() })
-        }
-        next()
-    }
-
+    validate
 ]
 module.exports = { validateUser, validateLogin };

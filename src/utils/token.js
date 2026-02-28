@@ -15,9 +15,17 @@ const verifyJWT = async (token) => {
 
     })
 }
+const getNewRefreshToken = () => crypto.randomBytes(64).toString("hex");
+const getNewHashedRefreshToken = (plainToken) => {
+    return crypto
+        .createHash("sha256")
+        .update(plainToken)
+        .digest("hex");
+}
 
 module.exports = {
     createJWT,
-    verifyJWT
-
+    verifyJWT,
+    getNewRefreshToken,
+    getNewHashedRefreshToken
 }
