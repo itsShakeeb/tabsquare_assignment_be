@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "TabSquare Assignment Backend",
   "main": "index.js",
+  "types": "commonjs",
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
