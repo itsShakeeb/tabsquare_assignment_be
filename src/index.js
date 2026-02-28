@@ -25,6 +25,7 @@ app.get('/health', async (_, res) => {
 app.use('/v1/auth', require('./routes/auth'))
 app.use('/v1/category', require('./routes/category'))
 app.use('/v1/dietary', require('./routes/dietary'))
+app.use('/v1/item', require('./routes/item'))
 
 app.listen(PORT, () => {
     console.log(`Server is running on ${PORT}`);
